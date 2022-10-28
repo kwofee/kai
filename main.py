@@ -1,10 +1,10 @@
 import pygame
 
-WIDTH, HEIGHT = 1920, 1080
+WIDTH, HEIGHT = 956, 546
 DEFAULT_IMAGE_SIZE = (100, 100)
 
 IMGS = [pygame.image.load('seal.png')]
-BG_IMG = pygame.image.load('kai-final.png')
+BG_IMG = pygame.image.load('kai-bg2.png')
 
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Kai")
@@ -41,14 +41,14 @@ def main():
     i = 0
     run = True
     while run:
-        win.fill((0,0,0))
-        win.blit(BG_IMG, (i,0))
-        win.blit(BG_IMG, (WIDTH+i, 0))
-
-        if i == -WIDTH:
-            win.blit(BG_IMG, (WIDTH+i, 0))
-            i = 0
-        i -= 10
+        # win.fill((0,0,0))
+        win.blit(BG_IMG, (0,0))
+        # win.blit(BG_IMG, (WIDTH+i, 0))
+        #
+        # if i == -WIDTH:
+        #     win.blit(BG_IMG, (WIDTH+i, 0))
+        #     i = 0
+        # i -= 10
 
         clock.tick(FPS)
 
