@@ -82,14 +82,22 @@ class Gull:
         win.blit(self.img, (self.x, self.y))
 
 
+
 class Ball:
     def __init__(self):
         self.img = IMGS[2]
         self.x = 0
         self.y = 0
+        self.angle = 0
+        self.x_vel = 0
+        self.y_vel = -5
 
     def draw(self, win):
-        win.blit(self.img, (self.x, self.y))
+        blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
+
+    def move(self):
+        self.x += self.x_vel
+        self.y += self.y_vel
 
 def draw(win, player_seal, gulls, ball):
     player_seal.draw(win)
@@ -97,7 +105,6 @@ def draw(win, player_seal, gulls, ball):
         i.draw(win)
     ball.draw(win)
     pygame.display.update()
-
 
 
 
