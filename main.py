@@ -1,6 +1,6 @@
 import math
 import random
-
+import math
 import pygame
 
 WIDTH, HEIGHT = 956, 546
@@ -14,6 +14,8 @@ IMGS = [
 ]
 
 BG_IMG = pygame.image.load('kai-bg2.png')
+BALL_WIDTH = IMGS[2].get_width()
+BALL_HEIGHT = IMGS[2].get_height()
 
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Kai")
@@ -27,7 +29,7 @@ def blit_rotate_center(win, image, top_left, angle):
 FPS = 120
 PADDLE_HEIGHT = 40
 PADDLE_WIDTH = 10
-MAX_VEL = 100
+MAX_VEL = 200
 
 class AbstractSeal:
     def __init__(self, max_vel, rotation_vel):
@@ -37,7 +39,10 @@ class AbstractSeal:
         self.angle = 0
         self.rotation_vel = rotation_vel
         self.x, self.y = self.START_POS
-        self.acceleration = 20
+        self.acceleration = 70
+        self.width = IMGS[0].get_width()
+        self.height = IMGS[0].get_height()
+        self.mask = pygame.mask.from_surface(self.img)
 
     def rotate(self, left=False, right=False):
         if left:
@@ -60,10 +65,11 @@ class AbstractSeal:
         self.collide_edge()
 
     def collide_edge(self):
+
         if self.x <= 0:
-            self.x = WIDTH/2 - 50
-        elif self.x + IMGS[0].get_width() >= WIDTH:
-            self.x = WIDTH/2 - 50
+            self.x = IMGS[0].get_width() + WIDTH
+        if self.x + IMGS[0].get_width() >= WIDTH:
+            self.x = 0
 
 
 class PlayerSeal(AbstractSeal):
@@ -77,19 +83,74 @@ class Gull:
         # self.x = random.randrange(self.img.get_width(), WIDTH-self.img.get_width())
         self.y = random.randrange(self.img.get_height(), HEIGHT-400)
         self.x = 0
+        self.mask = pygame.mask.from_surface(self.img)
 
     def draw(self, win):
         win.blit(self.img, (self.x, self.y))
+
 
 
 class Ball:
+    VEL = 5
     def __init__(self):
         self.img = IMGS[2]
-        self.x = 0
-        self.y = 0
+        self.x, self.y = WIDTH/2, HEIGHT/2
+        self.angle = 0
+        self.x_vel = 0
+        self.y_vel = -5
+        self.mask = pygame.mask.from_surface(self.img)
 
     def draw(self, win):
-        win.blit(self.img, (self.x, self.y))
+        blit_rotate_center(win, self.img, (self.x, self.y), self.angle)
+        self.x += self.x_vel
+        self.y += self.y_vel
+        if self.x <= 0 or self.x >= WIDTH - self.img.get_width():
+            self.x -= self.x_vel
+        if self.y <= 0 or self.y >= HEIGHT - self.img.get_height():
+            self.y -= self.y_vel
+
+    def set_vel(self, x_vel, y_vel):
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+
+
+def ball_collision(ball):
+    if ball.x - BALL_WIDTH <= 0 or ball.x + BALL_WIDTH >= WIDTH:
+        ball.set_vel(ball.x_vel * -1, ball.y_vel)
+    if ball.y - BALL_HEIGHT/2 <= 0 or ball.y + BALL_HEIGHT >= HEIGHT:
+        ball.set_vel(ball.x_vel, ball.y_vel * -1)
+
+
+def ball_seal_collision(ball, seal):
+    if not (ball.x <= seal.x + seal.width and ball.x >= seal.x):
+        return
+    if not (ball.y + BALL_WIDTH >= seal.y):
+        return
+
+    seal_center = seal.x + seal.width / 2
+    distance_to_center = ball.x - seal_center
+
+    percent_width = distance_to_center / seal.width
+    angle = percent_width * 90
+    angle_radians = math.radians(angle)
+
+    x_vel = math.sin(angle_radians) * ball.VEL
+    y_vel = math.cos(angle_radians) * ball.VEL * -1
+
+    ball.set_vel(x_vel, y_vel)
+
+def ball_gull_collision(ball, gulls, x=0, y=0):
+    gull_masks = []
+    ball_mask = ball.mask
+    for i in gulls:
+        gull_masks.append(i.mask)
+        offset = (int(i.x) - int(ball.x), int(i.y) - int(ball.y))
+        if ball_mask.overlap(i.mask, offset) != None:
+            i.img.fill((0,0,0,0))
+        else:
+            pass
+
+
 
 def draw(win, player_seal, gulls, ball):
     player_seal.draw(win)
@@ -97,7 +158,6 @@ def draw(win, player_seal, gulls, ball):
         i.draw(win)
     ball.draw(win)
     pygame.display.update()
-
 
 
 
@@ -113,7 +173,6 @@ def main():
     for i,j in d:
         gull = Gull()
         gull.x = random.randrange(i, j)
-        print(gull.x)
         gulls.append(gull)
 
 
@@ -136,9 +195,15 @@ def main():
         if keys[pygame.K_a]:
             moved = True
             player_seal.move_right()
-        if keys[pygame.K_r]:
-            player_seal.rotate(right=True)
 
+
+        ball_collision(ball)
+        ball_seal_collision(ball, player_seal)
+        ball_gull_collision(ball, gulls)
+
+        # if math.ceil(ball.y) in [490, 491, 492, 493]:
+        #     pygame.quit()
+        #     quit()
         draw(win, player_seal, gulls, ball)
 
     pygame.quit()
